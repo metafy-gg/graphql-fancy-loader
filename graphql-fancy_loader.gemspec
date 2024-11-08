@@ -45,6 +45,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'factory_bot_rails', '~> 6.2'
   spec.add_development_dependency 'listen', '~> 3.7'
   spec.add_development_dependency 'pg', '~> 1.2'
-  spec.add_development_dependency 'rails', '7.0.4'
+  spec.add_development_dependency 'rails', '7.0.8.1'
   spec.add_development_dependency 'rspec-rails', '~> 5.0'
 end
