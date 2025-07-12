@@ -5,18 +5,19 @@
 # To use +FancyLoader+, you'll make a subclass to define your sorts and source model. You can then
 # create a field which uses your subclass to load data.
 
-require 'graphql/batch'
+require 'graphql'
 require 'active_support'
 require 'active_support/concern'
 require 'active_support/configurable'
 require 'active_support/core_ext/class/attribute'
 
+require 'graphql/fancy_loader/version'
 require 'graphql/fancy_loader/dsl'
 
 module GraphQL
-  class FancyLoader < GraphQL::Batch::Loader
+  class FancyLoader < GraphQL::Dataloader::Source
     include ActiveSupport::Configurable
-    include GraphQL::FancyLoader::DSL
+    include DSL
 
     config_accessor :middleware
 
@@ -61,8 +62,8 @@ module GraphQL
     end
 
     # Perform the loading. Uses {GraphQL::FancyLoader::QueryGenerator} to build a query, then groups
-    # the results by the @find_by column, then fulfills all the Promises.
-    def perform(keys)
+    # the results by the @find_by column, then returns the grouped results.
+    def fetch(keys)
       query = QueryGenerator.new(
         model: model,
         find_by: @find_by,
@@ -78,9 +79,7 @@ module GraphQL
       ).query
 
       results = query.to_a.group_by { |rec| rec[@find_by] }
-      keys.each do |key|
-        fulfill(key, results[key] || [])
-      end
+      keys.map { |key| results[key] || [] }
     end
 
     private
@@ -100,6 +99,5 @@ require 'graphql/fancy_loader/pagination_filter'
 require 'graphql/fancy_loader/query_generator'
 require 'graphql/fancy_loader/rank_query_generator'
 require 'graphql/fancy_loader/type_generator'
-require 'graphql/fancy_loader/version'
 # Middleware
 require 'graphql/fancy_loader/pundit_middleware'

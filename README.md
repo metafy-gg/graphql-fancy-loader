@@ -1,32 +1,27 @@
 # GraphQL::FancyLoader
 
-FancyLoader (built on top of the [graphql-batch][graphql-batch] gem) efficiently batches queries
+> [!NOTE]
+> This is a fork of the original [hummingbird-me/graphql-fancy-loader](https://github.com/hummingbird-me/graphql-fancy-loader) that has been migrated to use graphql-ruby's built-in dataloader instead of graphql-batch. If you need the original graphql-batch implementation, please use the upstream repository.
+
+FancyLoader (built on top of graphql-ruby's dataloader) efficiently batches queries
 using postgres window functions to allow advanced features such as orders, limits, pagination, and
 authorization scoping. Built on top of Arel, FancyLoader is highly extensible and capable of
 handling complex sorts (including sorting based on a join) with minimal effort and high performance.
 
 We use FancyLoader in production to power large swaths of the Kitsu GraphQL API.
 
-[graphql-batch]: https://github.com/Shopify/graphql-batch
-
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'graphql-fancy_loader'
+gem 'graphql-fancy_loader', github: 'metafy-gg/graphql-fancy-loader'
 ```
 
 And then execute:
 
 ```
 $ bundle install
-```
-
-Or install it yourself as:
-
-```
-$ gem install graphql-fancy_loader
 ```
 
 ## Basic Usage
@@ -54,7 +49,7 @@ end
 
 This loader class provides two primary methods: `.sort_argument` and `.connection_for`.
 `.sort_argument` gives you a convenient auto-generated sort field which allows for multiple sorts.
-`.connection_for` is a wrapper around graphql-batch which returns a connection. Pagination will be
+`.connection_for` is a wrapper around graphql-ruby's dataloader which returns a connection. Pagination will be
 automatically applied to this connection by the graphql gem, so you just need to pass in your other
 options:
 
@@ -77,8 +72,7 @@ end
 
 ### Testing the Loader
 
-Testing a FancyLoader is pretty much exactly the same as testing any other graphql-batch Loader
-class:
+Testing a FancyLoader works with graphql-ruby's dataloader pattern:
 
 ```ruby
 RSpec.describe Loaders::PostsLoader do
@@ -90,13 +84,11 @@ RSpec.describe Loaders::PostsLoader do
   let(:sort) { [{ on: :created_at, direction: :desc }] }
 
   it 'loads all the posts for a user' do
-    posts = GraphQL::Batch.batch do
-      described_class.connection_for({
-        find_by: :user_id,
-        sort: sort,
-        context: context
-      }, user.id).nodes
-    end
+    posts = described_class.connection_for({
+      find_by: :user_id,
+      sort: sort,
+      context: context
+    }, user.id).nodes
 
     expect(posts.count).to eq(user.posts.count)
   end
@@ -208,7 +200,7 @@ will create a git tag for the version, push git commits and tags, and push the `
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at
-https://github.com/hummingbird-me/graphql-fancy-loader.
+https://github.com/metafy-gg/graphql-fancy-loader.
 
 ## License
 
