@@ -9,64 +9,61 @@ module GraphQL
       super(nil, **super_args)
     end
 
-    # @return [Promise<Array<ApplicationRecord>>]
+    # @return [Array<ApplicationRecord>]
     def nodes
+      resolved_nodes = base_nodes
       if @then
-        base_nodes.then(@then)
+        @then.call(resolved_nodes)
       else
-        base_nodes
+        resolved_nodes
       end
     end
 
     def edges
-      @edges ||= nodes.then do |nodes|
-        nodes.map { |n| @edge_class.new(n, self) }
+      @edges ||= begin
+        resolved_nodes = nodes
+        resolved_nodes.map { |n| @edge_class.new(n, self) }
       end
     end
 
-    # @return [Promise<Integer>]
+    # @return [Integer]
     def total_count
-      base_nodes.then do |results|
-        if results.first
-          results.first.attributes['total_count']
-        else
-          0
-        end
+      results = base_nodes
+      if results.first
+        results.first.attributes['total_count']
+      else
+        0
       end
     end
 
-    # @return [Promise<Boolean>]
+    # @return [Boolean]
     def has_next_page # rubocop:disable Naming/PredicateName
-      base_nodes.then do |results|
-        if results.last
-          results.last.attributes['row_number'] < results.last.attributes['total_count']
-        else
-          false
-        end
+      results = base_nodes
+      if results.last
+        results.last.attributes['row_number'] < results.last.attributes['total_count']
+      else
+        false
       end
     end
 
-    # @return [Promise<Boolean>]
+    # @return [Boolean]
     def has_previous_page # rubocop:disable Naming/PredicateName
-      base_nodes.then do |results|
-        if results.first
-          results.first.attributes['row_number'] > 1
-        else
-          false
-        end
+      results = base_nodes
+      if results.first
+        results.first.attributes['row_number'] > 1
+      else
+        false
       end
     end
 
     def start_cursor
-      base_nodes.then do |results|
-        cursor_for(results.first)
-      end
+      results = base_nodes
+      cursor_for(results.first)
     end
 
     def end_cursor
-      base_nodes.then do |results|
-        cursor_for(results.last)
-      end
+      results = base_nodes
+      cursor_for(results.last)
     end
 
     def cursor_for(item)
@@ -81,7 +78,7 @@ module GraphQL
     private
 
     def base_nodes
-      @base_nodes ||= @loader.for(**loader_args).load(@key)
+      @base_nodes ||= context.dataloader.with(@loader, **loader_args).load(@key)
     end
 
     def after_offset
